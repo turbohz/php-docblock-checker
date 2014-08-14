@@ -67,6 +67,7 @@ class CheckerCommand extends Command
             ->addOption('directory', 'd', InputOption::VALUE_REQUIRED, 'Directory to scan.', './')
             ->addOption('skip-classes', null, InputOption::VALUE_NONE, 'Don\'t check classes for docblocks.')
             ->addOption('skip-methods', null, InputOption::VALUE_NONE, 'Don\'t check methods for docblocks.')
+            ->addOption('errors', 'e', InputOption::VALUE_NONE, 'Only check validity of docblocks.')
             ->addOption('json', 'j', InputOption::VALUE_NONE, 'Output JSON instead of a log.')
             ->addArgument('file', InputArgument::OPTIONAL, 'File to scan', '');
     }
@@ -80,8 +81,11 @@ class CheckerCommand extends Command
         $this->basePath = $input->getOption('directory');
         $this->verbose = !$json;
         $this->output = $output;
+        $this->errors = $input->getOption('errors');
         $this->skipClasses = $input->getOption('skip-classes');
         $this->skipMethods = $input->getOption('skip-methods');
+        $this->reportMissingClasses = !$this->skipClasses && !$this->errors;
+        $this->reportMissingMethods = !$this->skipMethods && !$this->errors;
 
         // Set up excludes:
         if (!is_null($exclude)) {
@@ -143,7 +147,7 @@ class CheckerCommand extends Command
         foreach($stream->getClasses() as $name => $class) {
             $errors = false;
 
-            if (!$this->skipClasses && is_null($class['docblock'])) {
+            if ($this->reportMissingClasses && is_null($class['docblock'])) {
                 $errors = true;
 
                 $errorData = array(
@@ -167,21 +171,23 @@ class CheckerCommand extends Command
 
                 foreach ($class['methods'] as $methodName => $method) {
                     if (is_null($method['docblock'])) {
-                        $errors = true;
 
-                        $errorData  = array(
-                            'type' => 'method',
-                            'file' => $file,
-                            'class' => $name,
-                            'method' => $methodName,
-                            'line' => $method['startLine'],
-                            'message' => 'Method is missing a docblock.'
-                        );
+                        if ($this->reportMissingMethods) {
+                            $errors = true;
+                            $errorData  = array(
+                                'type' => 'method',
+                                'file' => $file,
+                                'class' => $name,
+                                'method' => $methodName,
+                                'line' => $method['startLine'],
+                                'message' => 'Method is missing a docblock.'
+                            );
 
-                        $this->report[] = $errorData;
+                            $this->report[] = $errorData;
 
-                        if ($this->verbose) {
-                            $this->displayError($errorData);
+                            if ($this->verbose) {
+                                $this->displayError($errorData);
+                            }
                         }
                     } else {
                         $docblockParams = $this->getDocBlockParams($method['docblock']);
