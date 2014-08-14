@@ -14,6 +14,7 @@ use PHP_Token_Stream;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -66,7 +67,8 @@ class CheckerCommand extends Command
             ->addOption('directory', 'd', InputOption::VALUE_REQUIRED, 'Directory to scan.', './')
             ->addOption('skip-classes', null, InputOption::VALUE_NONE, 'Don\'t check classes for docblocks.')
             ->addOption('skip-methods', null, InputOption::VALUE_NONE, 'Don\'t check methods for docblocks.')
-            ->addOption('json', 'j', InputOption::VALUE_NONE, 'Output JSON instead of a log.');
+            ->addOption('json', 'j', InputOption::VALUE_NONE, 'Output JSON instead of a log.')
+            ->addArgument('file', InputArgument::OPTIONAL, 'File to scan', '');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -74,6 +76,7 @@ class CheckerCommand extends Command
         // Process options:
         $exclude = $input->getOption('exclude');
         $json = $input->getOption('json');
+        $file = $input->getArgument('file');
         $this->basePath = $input->getOption('directory');
         $this->verbose = !$json;
         $this->output = $output;
@@ -91,7 +94,12 @@ class CheckerCommand extends Command
         }
 
         // Process:
-        $this->processDirectory();
+
+        if ($file) {
+            $this->processFile($file);
+        } else {
+            $this->processDirectory();
+        }
 
         // Output JSON if requested:
         if ($json) {
