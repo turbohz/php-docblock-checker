@@ -166,6 +166,21 @@ class CheckerCommand extends Command
                             $message = $class['file'] . ': ' . $method['startLine'] . ' - Method '.$name.'::'.$methodName.' is missing a docblock.';
                             $this->output->writeln('<error>' . $message . '</error>');
                         }
+                    } else {
+                        $docblockParams = $this->getDocBlockParams($method['docblock']);
+                        $signatureParams = $this->getMethodSignatureParams($method['signature']);
+
+                        foreach ($docblockParams as $p) {
+                            if (!in_array($p, $signatureParams)) {
+                                $this->output->writeln("<error> Argument $p in DockBlock isn't used.</error>");
+                            }
+                        }
+                        foreach ($signatureParams as $p) {
+                            if (!in_array($p, $docblockParams)) {
+                                $this->output->writeln("<error> Argument $p isn't specified in DockBlock.</error>");
+                            }
+                        }
+
                     }
                 }
             }
@@ -177,4 +192,24 @@ class CheckerCommand extends Command
 
 
     }
+
+    
+
+    private function getMethodSignatureParams($docblock)
+    {
+        $var = self::VARIABLE_MATCH;
+
+        preg_match_all("/({$var})/", $docblock, $matches);
+        return $matches[1];
+    }
+
+    private function getDocBlockParams($docblock)
+    {
+        $var = self::VARIABLE_MATCH;
+
+        preg_match_all("/@param.+?({$var})/", $docblock, $matches);
+        return $matches[1];
+    }
+
+    const VARIABLE_MATCH = '\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]+';
 }
