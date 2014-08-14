@@ -189,12 +189,34 @@ class CheckerCommand extends Command
 
                         foreach ($docblockParams as $p) {
                             if (!in_array($p, $signatureParams)) {
-                                $this->output->writeln("<error> Argument $p in DockBlock isn't used.</error>");
+                                $errorData  = array(
+                                    'type' => 'method',
+                                    'file' => $file,
+                                    'class' => $name,
+                                    'method' => $methodName,
+                                    'line' => $method['startLine'],
+                                    'message' => "Argument $p in DockBlock isn't used."
+                                );
+                                $this->report[] = $errorData;
+                                if ($this->verbose) {
+                                    $this->displayError($errorData);
+                                }
                             }
                         }
                         foreach ($signatureParams as $p) {
                             if (!in_array($p, $docblockParams)) {
-                                $this->output->writeln("<error> Argument $p isn't specified in DockBlock.</error>");
+                                $errorData  = array(
+                                    'type' => 'method',
+                                    'file' => $file,
+                                    'class' => $name,
+                                    'method' => $methodName,
+                                    'line' => $method['startLine'],
+                                    'message' => "Argument $p isn't specified in DockBlock."
+                                );
+                                $this->report[] = $errorData;
+                                if ($this->verbose) {
+                                    $this->displayError($errorData);
+                                }
                             }
                         }
 
