@@ -138,41 +138,50 @@ class CheckerCommand extends Command
     {
         $stream = new PHP_Token_Stream($this->basePath . $file);
 
+        $errorData = array();
+
         foreach($stream->getClasses() as $name => $class) {
             $errors = false;
 
             if (!$this->skipClasses && is_null($class['docblock'])) {
                 $errors = true;
 
-                $this->report[] = array(
+                $errorData = array(
                     'type' => 'class',
                     'file' => $file,
                     'class' => $name,
                     'line' => $class['startLine'],
+                    'message' => 'Class is missing a docblock.'
                 );
+                
+                $this->report[] = $errorData;
 
                 if ($this->verbose) {
-                    $message = $class['file'] . ': ' . $class['startLine'] . ' - Class ' . $name . ' is missing a docblock.';
-                    $this->output->writeln('<error>' . $message . '</error>');
+                    $this->displayError($errorData);
                 }
             }
 
             if (!$this->skipMethods) {
+
+                $errorData = array();
+
                 foreach ($class['methods'] as $methodName => $method) {
                     if (is_null($method['docblock'])) {
                         $errors = true;
 
-                        $this->report[] = array(
+                        $errorData  = array(
                             'type' => 'method',
                             'file' => $file,
                             'class' => $name,
                             'method' => $methodName,
                             'line' => $method['startLine'],
+                            'message' => 'Method is missing a docblock.'
                         );
 
+                        $this->report[] = $errorData;
+
                         if ($this->verbose) {
-                            $message = $class['file'] . ': ' . $method['startLine'] . ' - Method '.$name.'::'.$methodName.' is missing a docblock.';
-                            $this->output->writeln('<error>' . $message . '</error>');
+                            $this->displayError($errorData);
                         }
                     } else {
                         $docblockParams = $this->getDocBlockParams($method['docblock']);
@@ -201,7 +210,15 @@ class CheckerCommand extends Command
 
     }
 
-    
+    private function displayError($error)
+    {
+        if ($error['type'] === 'class') {
+            $message = "$error[file]: $error[line]  - Class $error[class] > $error[message]";
+        } elseif ($error['type'] === 'method') {
+            $message = "$error[file]: $error[line] - Method $error[class]::$error[method] > $error[message]";
+        }
+        $this->output->writeln('<error>' . $message . '</error>');
+    }
 
     private function getMethodSignatureParams($docblock)
     {
