@@ -69,6 +69,7 @@ class CheckerCommand extends Command
             ->addOption('skip-methods', null, InputOption::VALUE_NONE, 'Don\'t check methods for docblocks.')
             ->addOption('errors', 'e', InputOption::VALUE_NONE, 'Only check validity of docblocks.')
             ->addOption('json', 'j', InputOption::VALUE_NONE, 'Output JSON instead of a log.')
+            ->addOption('oks', null, InputOption::VALUE_REQUIRED, 'Report OK classes.', true)
             ->addArgument('file', InputArgument::OPTIONAL, 'File to scan', '');
     }
 
@@ -86,6 +87,7 @@ class CheckerCommand extends Command
         $this->skipMethods = $input->getOption('skip-methods');
         $this->reportMissingClasses = !$this->skipClasses && !$this->errors;
         $this->reportMissingMethods = !$this->skipMethods && !$this->errors;
+        $this->oks = filter_var($input->getOption('oks'), FILTER_VALIDATE_BOOLEAN);
 
         // Set up excludes:
         if (!is_null($exclude)) {
@@ -230,7 +232,7 @@ class CheckerCommand extends Command
                 }
             }
 
-            if (!$errors && $this->verbose) {
+            if (!$errors && $this->verbose && $this->oks) {
                 $this->output->writeln($name . ' <info>OK</info>');
             }
         }
