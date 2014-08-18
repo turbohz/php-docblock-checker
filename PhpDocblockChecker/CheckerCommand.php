@@ -193,41 +193,44 @@ class CheckerCommand extends Command
                         }
                     } else {
                         $docblockParams = $this->getDocBlockParams($method['docblock']);
-                        $signatureParams = $this->getMethodSignatureParams($method['signature']);
 
-                        foreach ($docblockParams as $p) {
-                            if (!in_array($p, $signatureParams)) {
-                                $errorData  = array(
-                                    'type' => 'method',
-                                    'file' => $file,
-                                    'class' => $name,
-                                    'method' => $methodName,
-                                    'line' => $method['startLine'],
-                                    'message' => "Argument $p in DockBlock isn't used."
-                                );
-                                $this->report[] = $errorData;
-                                if ($this->verbose) {
-                                    $this->displayError($errorData);
+                        if (!empty($docblockParams)) {
+
+                            $signatureParams = $this->getMethodSignatureParams($method['signature']);
+
+                            foreach ($docblockParams as $p) {
+                                if (!in_array($p, $signatureParams)) {
+                                    $errorData  = array(
+                                        'type' => 'method',
+                                        'file' => $file,
+                                        'class' => $name,
+                                        'method' => $methodName,
+                                        'line' => $method['startLine'],
+                                        'message' => "Argument $p in DockBlock isn't used."
+                                    );
+                                    $this->report[] = $errorData;
+                                    if ($this->verbose) {
+                                        $this->displayError($errorData);
+                                    }
+                                }
+                            }
+                            foreach ($signatureParams as $p) {
+                                if (!in_array($p, $docblockParams)) {
+                                    $errorData  = array(
+                                        'type' => 'method',
+                                        'file' => $file,
+                                        'class' => $name,
+                                        'method' => $methodName,
+                                        'line' => $method['startLine'],
+                                        'message' => "Argument $p isn't specified in DockBlock."
+                                    );
+                                    $this->report[] = $errorData;
+                                    if ($this->verbose) {
+                                        $this->displayError($errorData);
+                                    }
                                 }
                             }
                         }
-                        foreach ($signatureParams as $p) {
-                            if (!in_array($p, $docblockParams)) {
-                                $errorData  = array(
-                                    'type' => 'method',
-                                    'file' => $file,
-                                    'class' => $name,
-                                    'method' => $methodName,
-                                    'line' => $method['startLine'],
-                                    'message' => "Argument $p isn't specified in DockBlock."
-                                );
-                                $this->report[] = $errorData;
-                                if ($this->verbose) {
-                                    $this->displayError($errorData);
-                                }
-                            }
-                        }
-
                     }
                 }
             }
